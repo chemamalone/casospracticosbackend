@@ -1,10 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import json
 from function_data_filter import solve
 
-# --- Tu data pegada aquí ---
 data = [
     {"id": 12340, "weight": 1, "width": 1, "height": 1, "length": 1, "cost":125, "priority": 2},
     {"id": 12341, "weight": 1, "width": 1, "height": 1, "length": 1, "cost":127, "priority": 4},
@@ -38,16 +34,11 @@ data = [
     {"id": 12369, "weight": 3, "width": 1, "height": 1, "length": 10, "cost":183, "priority": 0}
 ]
 
-# --- Configura aquí tus filtros y el orden ---
-# Cada filtro es una terna: (campo, operador, valor)
 filters_triplets = [
     ("weight", "<=", 3),
     ("width", ">", 2)
 ]
-order = "ASC"   # ó "ASC O DESC"
-# ---------------------------------------------
-
+order = "ASC"  
 result = solve(data, filters_triplets, order)
 
-# Imprime JSON compacto (para revisión automática)
 print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))

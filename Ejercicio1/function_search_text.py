@@ -1,11 +1,7 @@
 import unicodedata
 
 def normalize_text(s):
-    """
-    Normaliza el texto:
-    - Convierte a minúsculas
-    - Elimina acentos y diacríticos
-    """
+
     s = s.lower()
     nfd = unicodedata.normalize("NFD", s)
     out = []
@@ -14,17 +10,13 @@ def normalize_text(s):
     while i < n:
         ch = nfd[i]
         cat = unicodedata.category(ch)
-        if cat != "Mn":  # Mn = marca diacrítica
+        if cat != "Mn":
             out.append(ch)
         i += 1
     return "".join(out)
 
 
 def build_lps(pattern):
-    """
-    Construye la tabla LPS (Longest Prefix Suffix)
-    usada por el algoritmo KMP.
-    """
     m = len(pattern)
     lps = [0] * m
     length = 0
@@ -45,10 +37,6 @@ def build_lps(pattern):
 
 
 def kmp_count(text, pattern):
-    """
-    Cuenta las ocurrencias (incluyendo traslapes)
-    de 'pattern' dentro de 'text' usando KMP.
-    """
     n = len(text)
     m = len(pattern)
 

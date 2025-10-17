@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 CLI para Ejercicio 3 (hoja tipo Excel) con persistencia en JSON.
 
@@ -41,18 +39,12 @@ def parse_float(value_str, default=None):
 
 
 def _sheet_to_serializable(sheet):
-    """
-    Convierte el estado interno de la hoja a un dict JSON-serializable.
-    Se asume que sheet._cells es { (row, col): value }.
-    Claves se guardan como "row,col" (string).
-    """
     data = {}
     cells = getattr(sheet, "_cells", None)
     if isinstance(cells, dict):
         for (r, c), v in cells.items():
             data[f"{int(r)},{int(c)}"] = v
     else:
-        # Si la implementación no expone _cells, no persistimos para evitar romper.
         data["_nopersist"] = True
     return data
 
@@ -72,8 +64,6 @@ def _serializable_to_sheet(data, sheet):
             c = int(cs.strip())
         except ValueError:
             continue
-        # insert_cell solo inserta si está vacío; como estamos reconstruyendo
-        # el estado, asumimos que está vacío en una nueva instancia.
         sheet.insert_cell(r, c, v)
 
 
@@ -83,7 +73,6 @@ def save_state(sheet):
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
     except Exception as e:
-        # Persistencia no debe tumbar el CLI; si falla, seguimos.
         print(f"[WARN] No se pudo guardar estado: {e}", file=sys.stderr)
 
 
@@ -101,9 +90,6 @@ def load_state(sheet):
 
 
 def init_demo_data(sheet):
-    """
-    Carga los datos de demo SOLO si no hay estado previo.
-    """
     sheet.insert_cell(1, 1, 10)
     sheet.insert_cell(1, 2, 20)
     sheet.insert_cell(2, 1, "hola")
@@ -191,7 +177,6 @@ def main():
         print("Suma:", total)
 
     elif args.cmd == "reset":
-        # Eliminar estado y re-crear demo
         try:
             if os.path.exists(STATE_FILE):
                 os.remove(STATE_FILE)

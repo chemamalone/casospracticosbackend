@@ -1,14 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Utilidades para Ejercicio 2:
-- Filtros dinámicos (N filtros) con operadores: <, <=, >, >=, ==, !=
-- Orden estable por 'priority' con MergeSort manual
-Restricciones: stdlib, sin sort/sorted, sin 'in', 'find', 'index', etc.
-"""
-
 def _get_value(dct, key, default=None):
-    """Obtiene dct[key] sin usar 'in'."""
     keys = list(dct.keys())
     i = 0
     n = len(keys)
@@ -19,9 +9,7 @@ def _get_value(dct, key, default=None):
         i += 1
     return default
 
-
 def _compare(a, b, asc):
-    """Devuelve -1/0/1 comparando a vs b; invierte si asc=False."""
     res = 0
     if a < b:
         res = -1
@@ -33,7 +21,6 @@ def _compare(a, b, asc):
 
 
 def _merge(left, right, asc):
-    """Merge estable por 'priority'."""
     i = 0
     j = 0
     out = []
@@ -59,7 +46,6 @@ def _merge(left, right, asc):
 
 
 def mergesort_by_priority(items, asc=True):
-    """Ordena estable por 'priority' (sin sort/sorted)."""
     n = len(items)
     if n <= 1:
         return items[:]
@@ -80,7 +66,6 @@ def mergesort_by_priority(items, asc=True):
 
 
 def _passes_single_filter(item, triplet):
-    """Evalúa (campo, operador, valor)."""
     field = triplet[0]
     op = triplet[1]
     val = triplet[2]
@@ -105,7 +90,6 @@ def _passes_single_filter(item, triplet):
 
 
 def split_by_filters(items, filters_triplets):
-    """Devuelve (matched, rest) preservando orden original en rest."""
     matched = []
     rest = []
 
@@ -119,7 +103,7 @@ def split_by_filters(items, filters_triplets):
         while j < m:
             if not _passes_single_filter(it, filters_triplets[j]):
                 all_ok = False
-                j = m  # corto-circuito
+                j = m 
             else:
                 j += 1
         if all_ok:
@@ -131,11 +115,6 @@ def split_by_filters(items, filters_triplets):
 
 
 def solve(items, filters_triplets, order_str):
-    """
-    Regresa:
-      primero -> items que cumplen filtros ordenados por 'priority'
-      después -> los demás en su orden original
-    """
     o = str(order_str).upper()
     asc = True
     if o == "DESC":
