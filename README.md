@@ -1,7 +1,5 @@
-"""
-===============================================================
 DECISIONES DE DISEÑO Y EXPLICACIÓN TÉCNICA
-===============================================================
+
 
 Ejercicio 1
 - Se evita el uso de `in`, `find` o expresiones regulares para simular un substring search manual.
@@ -20,11 +18,11 @@ Ejercicio 3
 - `argparse` gestiona subcomandos de manera limpia, similar a una CLI profesional (`git`, `docker`, etc.).
 - Los tipos se infieren automáticamente (`int`, `float`, `str`) al insertar o actualizar.
 
-===============================================================
-🧩 REQUISITOS
-===============================================================
+
+REQUISITOS
+
 - Python 3.13
 - Editor de texto recomendado: Visual Studio Code
 - No se utilizan librerías externas (solo `argparse`, `json`, etc.)
-===============================================================
+
 """
