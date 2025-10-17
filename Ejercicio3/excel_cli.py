@@ -1,20 +1,3 @@
-"""
-CLI para Ejercicio 3 (hoja tipo Excel) con persistencia en JSON.
-
-Subcomandos:
-  insert  --row R --col C --value V
-  update  --row R --col C --value V
-  has     --row R --col C
-  preview
-  row     --row R
-  col     --col C
-  reset   (opcional) borra el estado guardado
-
-Restricciones:
-- Python 3.13
-- Solo stdlib (argparse, json, os, sys)
-"""
-
 import argparse
 import sys
 import os
@@ -38,7 +21,7 @@ def parse_float(value_str, default=None):
         return default
 
 
-def _sheet_to_serializable(sheet):
+def _sheet_to_serializable(sheet: Sheet):
     data = {}
     cells = getattr(sheet, "_cells", None)
     if isinstance(cells, dict):
@@ -49,10 +32,7 @@ def _sheet_to_serializable(sheet):
     return data
 
 
-def _serializable_to_sheet(data, sheet):
-    """
-    Carga el dict serializado en la hoja.
-    """
+def _serializable_to_sheet(data, sheet: Sheet):
     if not isinstance(data, dict) or "_nopersist" in data:
         return
     for key, v in data.items():
@@ -67,7 +47,7 @@ def _serializable_to_sheet(data, sheet):
         sheet.insert_cell(r, c, v)
 
 
-def save_state(sheet):
+def save_state(sheet: Sheet):
     try:
         data = _sheet_to_serializable(sheet)
         with open(STATE_FILE, "w", encoding="utf-8") as f:
@@ -76,7 +56,7 @@ def save_state(sheet):
         print(f"[WARN] No se pudo guardar estado: {e}", file=sys.stderr)
 
 
-def load_state(sheet):
+def load_state(sheet: Sheet):
     if not os.path.exists(STATE_FILE):
         return False
     try:
@@ -89,7 +69,7 @@ def load_state(sheet):
         return False
 
 
-def init_demo_data(sheet):
+def init_demo_data(sheet: Sheet):
     sheet.insert_cell(1, 1, 10)
     sheet.insert_cell(1, 2, 20)
     sheet.insert_cell(2, 1, "hola")
@@ -105,46 +85,39 @@ def main():
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    # insert
     p_insert = sub.add_parser("insert", help="Insertar valor en celda vacía")
     p_insert.add_argument("--row", type=int, required=True)
     p_insert.add_argument("--col", type=int, required=True)
     p_insert.add_argument("--value", type=str, required=True)
 
-    # update
     p_update = sub.add_parser("update", help="Actualizar valor en celda existente")
     p_update.add_argument("--row", type=int, required=True)
     p_update.add_argument("--col", type=int, required=True)
     p_update.add_argument("--value", type=str, required=True)
 
-    # has
     p_has = sub.add_parser("has", help="Validar si una celda tiene información")
     p_has.add_argument("--row", type=int, required=True)
     p_has.add_argument("--col", type=int, required=True)
 
-    # preview
-    sub.add_parser("preview", help="Mostrar preview de toda la hoja")
+    p_prev = sub.add_parser("preview", help="Mostrar preview de la hoja")
+    p_prev.add_argument("--rows", type=int, default=None, help="Límite de filas a mostrar")
+    p_prev.add_argument("--cols", type=int, default=None, help="Límite de columnas a mostrar")
 
-    # row
     p_row = sub.add_parser("row", help="Recuperar elementos de una fila y sumar")
     p_row.add_argument("--row", type=int, required=True)
 
-    # col
     p_col = sub.add_parser("col", help="Recuperar elementos de una columna y sumar")
     p_col.add_argument("--col", type=int, required=True)
 
-    # reset (opcional)
     sub.add_parser("reset", help="Borrar estado persistido y reiniciar demo")
 
     args = parser.parse_args(sys.argv[1:])
 
-    # Cargar estado si existe; si no, inicializar demo
     loaded = load_state(sheet)
     if not loaded and args.cmd != "reset":
         init_demo_data(sheet)
 
     if args.cmd == "insert":
-        # castear numéricos cuando sea posible
         v_int = parse_int(args.value)
         v = v_int if v_int is not None else parse_float(args.value, args.value)
         ok = sheet.insert_cell(args.row, args.col, v)
@@ -164,7 +137,9 @@ def main():
         print("True" if sheet.has_value(args.row, args.col) else "False")
 
     elif args.cmd == "preview":
-        print(sheet.preview())
+        rows = getattr(args, "rows", None)
+        cols = getattr(args, "cols", None)
+        print(sheet.preview(max_rows=rows, max_cols=cols))
 
     elif args.cmd == "row":
         vals, total = sheet.row_values_and_sum(args.row)
