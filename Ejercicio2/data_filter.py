@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-from e2_utils import solve
+from function_data_filter import solve
 
 # --- Tu data pegada aquí ---
 data = [

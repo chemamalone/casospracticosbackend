@@ -1,10 +1,10 @@
-from functionSearchText import normalize_text, kmp_count
+from function_search_text import normalize_text, kmp_count
 
 ARCHIVO_PARRAFO = r"D:\prueba tecnica\Ejercicio 1\parrafo.txt"
 TEXTO_A_BUSCAR = "logística"
 
-from buscaTuTexto import ARCHIVO_PARRAFO, TEXTO_A_BUSCAR
-from functionSearchText import normalize_text, kmp_count
+from busca_texto import ARCHIVO_PARRAFO, TEXTO_A_BUSCAR
+from function_search_text import normalize_text, kmp_count
 
 def run():
     # Lee el párrafo desde archivo (UTF-8)

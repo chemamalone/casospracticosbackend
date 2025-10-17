@@ -19,7 +19,7 @@ Restricciones:
 
 import argparse
 import sys
-from ejercicio3_sheet import Sheet
+from main_cli import Sheet
 
 
 def parse_int(value_str, default=None):

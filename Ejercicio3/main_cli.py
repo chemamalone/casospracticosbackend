@@ -200,7 +200,7 @@ def _demo() -> None:
     # 1) Insertar
     sheet.insert_cell(1, 1, 10)
     sheet.insert_cell(1, 2, 20)
-    sheet.insert_cell(2, 1, "hola")
+    sheet.insert_cell(2, 1, "hi")
     sheet.insert_cell(3, 3, 7.5)
 
     # 2) Actualizar (solo si existe)
