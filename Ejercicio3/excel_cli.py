@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-CLI para Ejercicio 3 (hoja tipo Excel).
+CLI para Ejercicio 3 (hoja tipo Excel) con persistencia en JSON.
 
 Subcomandos:
   insert  --row R --col C --value V
@@ -10,16 +10,20 @@ Subcomandos:
   preview
   row     --row R
   col     --col C
+  reset   (opcional) borra el estado guardado
 
 Restricciones:
 - Python 3.13
-- Solo stdlib (argparse)
-- Sin usar helpers prohibidos para manejo de listas/cadenas (in, find, index, sort, etc.) en la lógica de hoja.
+- Solo stdlib (argparse, json, os, sys)
 """
 
 import argparse
 import sys
+import os
+import json
 from main_cli import Sheet
+
+STATE_FILE = os.path.join(os.path.dirname(__file__), "sheet_state.json")
 
 
 def parse_int(value_str, default=None):
@@ -36,13 +40,83 @@ def parse_float(value_str, default=None):
         return default
 
 
+def _sheet_to_serializable(sheet):
+    """
+    Convierte el estado interno de la hoja a un dict JSON-serializable.
+    Se asume que sheet._cells es { (row, col): value }.
+    Claves se guardan como "row,col" (string).
+    """
+    data = {}
+    cells = getattr(sheet, "_cells", None)
+    if isinstance(cells, dict):
+        for (r, c), v in cells.items():
+            data[f"{int(r)},{int(c)}"] = v
+    else:
+        # Si la implementación no expone _cells, no persistimos para evitar romper.
+        data["_nopersist"] = True
+    return data
+
+
+def _serializable_to_sheet(data, sheet):
+    """
+    Carga el dict serializado en la hoja.
+    """
+    if not isinstance(data, dict) or "_nopersist" in data:
+        return
+    for key, v in data.items():
+        if not isinstance(key, str) or "," not in key:
+            continue
+        rs, cs = key.split(",", 1)
+        try:
+            r = int(rs.strip())
+            c = int(cs.strip())
+        except ValueError:
+            continue
+        # insert_cell solo inserta si está vacío; como estamos reconstruyendo
+        # el estado, asumimos que está vacío en una nueva instancia.
+        sheet.insert_cell(r, c, v)
+
+
+def save_state(sheet):
+    try:
+        data = _sheet_to_serializable(sheet)
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+    except Exception as e:
+        # Persistencia no debe tumbar el CLI; si falla, seguimos.
+        print(f"[WARN] No se pudo guardar estado: {e}", file=sys.stderr)
+
+
+def load_state(sheet):
+    if not os.path.exists(STATE_FILE):
+        return False
+    try:
+        with open(STATE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _serializable_to_sheet(data, sheet)
+        return True
+    except Exception as e:
+        print(f"[WARN] No se pudo cargar estado: {e}", file=sys.stderr)
+        return False
+
+
+def init_demo_data(sheet):
+    """
+    Carga los datos de demo SOLO si no hay estado previo.
+    """
+    sheet.insert_cell(1, 1, 10)
+    sheet.insert_cell(1, 2, 20)
+    sheet.insert_cell(2, 1, "hola")
+    sheet.insert_cell(3, 3, 7.5)
+    sheet.update_cell(1, 2, 25)
+
+
 def main():
     sheet = Sheet()
 
     parser = argparse.ArgumentParser(
-        description="Hoja básica: insertar, actualizar, validar, preview, sumar por fila/columna."
+        description="Hoja básica: insertar, actualizar, validar, preview, sumar por fila/columna (con persistencia)."
     )
-
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     # insert
@@ -73,27 +147,32 @@ def main():
     p_col = sub.add_parser("col", help="Recuperar elementos de una columna y sumar")
     p_col.add_argument("--col", type=int, required=True)
 
+    # reset (opcional)
+    sub.add_parser("reset", help="Borrar estado persistido y reiniciar demo")
+
     args = parser.parse_args(sys.argv[1:])
 
-    # Para demo rápida: empezamos con algunos datos como en el ejemplo del _demo()
-    sheet.insert_cell(1, 1, 10)
-    sheet.insert_cell(1, 2, 20)
-    sheet.insert_cell(2, 1, "hola")
-    sheet.insert_cell(3, 3, 7.5)
-    sheet.update_cell(1, 2, 25)
+    # Cargar estado si existe; si no, inicializar demo
+    loaded = load_state(sheet)
+    if not loaded and args.cmd != "reset":
+        init_demo_data(sheet)
 
     if args.cmd == "insert":
-        # intentar castear numéricos cuando sea posible
+        # castear numéricos cuando sea posible
         v_int = parse_int(args.value)
         v = v_int if v_int is not None else parse_float(args.value, args.value)
         ok = sheet.insert_cell(args.row, args.col, v)
         print("OK" if ok else "Celda ocupada")
+        if ok:
+            save_state(sheet)
 
     elif args.cmd == "update":
         v_int = parse_int(args.value)
         v = v_int if v_int is not None else parse_float(args.value, args.value)
         ok = sheet.update_cell(args.row, args.col, v)
         print("OK" if ok else "Celda inexistente")
+        if ok:
+            save_state(sheet)
 
     elif args.cmd == "has":
         print("True" if sheet.has_value(args.row, args.col) else "False")
@@ -110,6 +189,18 @@ def main():
         vals, total = sheet.col_values_and_sum(args.col)
         print("Valores:", vals)
         print("Suma:", total)
+
+    elif args.cmd == "reset":
+        # Eliminar estado y re-crear demo
+        try:
+            if os.path.exists(STATE_FILE):
+                os.remove(STATE_FILE)
+        except Exception as e:
+            print(f"[WARN] No se pudo borrar el estado: {e}", file=sys.stderr)
+        sheet = Sheet()
+        init_demo_data(sheet)
+        save_state(sheet)
+        print("Estado reiniciado a datos de demo.")
 
 
 if __name__ == "__main__":
